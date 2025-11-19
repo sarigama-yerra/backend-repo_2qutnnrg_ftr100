@@ -220,6 +220,26 @@ def dashboard():
     return {"items": items}
 
 
+@app.post("/api/seed")
+def seed_dummy():
+    """Seed the database with a few demo cats if empty."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not available")
+    count = db["cat"].count_documents({})
+    if count > 0:
+        return {"status": "skipped", "count": count}
+
+    demo = [
+        Cat(name="Luna", latitude=51.5074, longitude=-0.1278, city="London", notes="Short hair, indoor/outdoor", units="metric"),
+        Cat(name="Milo", latitude=40.7128, longitude=-74.0060, city="New York", notes="Senior, prefers warm rugs", units="metric"),
+        Cat(name="Nala", latitude=-33.8688, longitude=151.2093, city="Sydney", notes="Active, enjoys evening walks", units="metric"),
+    ]
+    ids: List[str] = []
+    for c in demo:
+        ids.append(create_document("cat", c))
+    return {"status": "seeded", "count": len(ids), "ids": ids}
+
+
 @app.get("/test")
 def test_database():
     response = {
